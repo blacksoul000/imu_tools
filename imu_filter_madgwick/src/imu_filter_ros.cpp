@@ -47,6 +47,9 @@ ImuFilterRos::ImuFilterRos(rclcpp::Node::SharedPtr node):
   fixed_frame_ = node_->declare_parameter("fixed_frame", "odom");
   constant_dt_ = node_->declare_parameter("constant_dt", 0.0);
   publish_debug_topics_ = node_->declare_parameter("publish_debug_topics", false);
+  double orientation_stddev = node_->declare_parameter("orientation_stddev", 0.0);
+
+  orientation_variance_ = orientation_stddev * orientation_stddev;
 
   std::string world_frame = node_->declare_parameter("world_frame", "enu");
 
