@@ -25,55 +25,53 @@
 #ifndef IMU_FILTER_MADWICK_IMU_FILTER_ROS_H
 #define IMU_FILTER_MADWICK_IMU_FILTER_ROS_H
 
-#include <ros/ros.h>
-#include <sensor_msgs/Imu.h>
-#include <sensor_msgs/MagneticField.h>
-#include <geometry_msgs/Vector3Stamped.h>
+#include "rclcpp/rclcpp.hpp"
+#include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/magnetic_field.hpp>
+#include <geometry_msgs/msg/vector3_stamped.hpp>
 #include "tf2_ros/transform_broadcaster.h"
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
-#include <dynamic_reconfigure/server.h>
+// #include <dynamic_reconfigure/server.h>
 
 #include "imu_filter_madgwick/imu_filter.h"
-#include "imu_filter_madgwick/ImuFilterMadgwickConfig.h"
+// #include "imu_filter_madgwick/ImuFilterMadgwickConfig.h"
 
 class ImuFilterRos
 {
-  typedef sensor_msgs::Imu              ImuMsg;
-  typedef sensor_msgs::MagneticField    MagMsg;
+  typedef sensor_msgs::msg::Imu              ImuMsg;
+  typedef sensor_msgs::msg::MagneticField    MagMsg;
 
   typedef message_filters::sync_policies::ApproximateTime<ImuMsg, MagMsg> SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Synchronizer;
   typedef message_filters::Subscriber<ImuMsg> ImuSubscriber;
   typedef message_filters::Subscriber<MagMsg> MagSubscriber;
 
-  typedef imu_filter_madgwick::ImuFilterMadgwickConfig   FilterConfig;
-  typedef dynamic_reconfigure::Server<FilterConfig>   FilterConfigServer;
+  // typedef imu_filter_madgwick::ImuFilterMadgwickConfig   FilterConfig;
+  // typedef dynamic_reconfigure::Server<FilterConfig>   FilterConfigServer;
 
   public:
 
-    ImuFilterRos(ros::NodeHandle nh, ros::NodeHandle nh_private);
+    ImuFilterRos(rclcpp::Node::SharedPtr node);
     virtual ~ImuFilterRos();
 
   private:
 
     // **** ROS-related
 
-    ros::NodeHandle nh_;
-    ros::NodeHandle nh_private_;
+    rclcpp::Node::SharedPtr node_;
 
-    boost::shared_ptr<ImuSubscriber> imu_subscriber_;
-    boost::shared_ptr<MagSubscriber> mag_subscriber_;
-    boost::shared_ptr<Synchronizer> sync_;
+    std::shared_ptr<ImuSubscriber> imu_subscriber_;
+    std::shared_ptr<MagSubscriber> mag_subscriber_;
+    std::shared_ptr<Synchronizer> sync_;
 
-    ros::Publisher rpy_filtered_debug_publisher_;
-    ros::Publisher rpy_raw_debug_publisher_;
-    ros::Publisher imu_publisher_;
+    rclcpp::Publisher<geometry_msgs::msg::Vector3Stamped>::SharedPtr rpy_filtered_debug_publisher_;
+    rclcpp::Publisher<geometry_msgs::msg::Vector3Stamped>::SharedPtr rpy_raw_debug_publisher_;
+    rclcpp::Publisher<ImuMsg>::SharedPtr imu_publisher_;
+    // std::shared_ptr<FilterConfigServer> config_server_;
+    rclcpp::TimerBase::SharedPtr check_topics_timer_;
     tf2_ros::TransformBroadcaster tf_broadcaster_;
-
-    boost::shared_ptr<FilterConfigServer> config_server_;
-    ros::Timer check_topics_timer_;
 
     // **** paramaters
     WorldFrame::WorldFrame world_frame_;
@@ -85,31 +83,31 @@ class ImuFilterRos
     std::string imu_frame_;
     double constant_dt_;
     bool publish_debug_topics_;
-    geometry_msgs::Vector3 mag_bias_;
+    geometry_msgs::msg::Vector3 mag_bias_;
     double orientation_variance_;
 
     // **** state variables
-    boost::mutex mutex_;
+    std::mutex mutex_;
     bool initialized_;
-    ros::Time last_time_;
+    rclcpp::Time last_time_;
 
     // **** filter implementation
     ImuFilter filter_;
 
     // **** member functions
     void imuMagCallback(const ImuMsg::ConstPtr& imu_msg_raw,
-                        const MagMsg::ConstPtr& mav_msg);
+                        const MagMsg::ConstPtr& mag_msg);
 
-    void imuCallback(const ImuMsg::ConstPtr& imu_msg_raw);
+    void imuCallback(ImuMsg::SharedPtr imu_msg_raw);
 
     void publishFilteredMsg(const ImuMsg::ConstPtr& imu_msg_raw);
     void publishTransform(const ImuMsg::ConstPtr& imu_msg_raw);
 
-    void publishRawMsg(const ros::Time& t,
+    void publishRawMsg(const builtin_interfaces::msg::Time& t,
                        float roll, float pitch, float yaw);
 
-    void reconfigCallback(FilterConfig& config, uint32_t level);
-    void checkTopicsTimerCallback(const ros::TimerEvent&);
+    // void reconfigCallback(FilterConfig& config, uint32_t level);
+    void checkTopicsTimerCallback();
 };
 
 #endif // IMU_FILTER_IMU_MADWICK_FILTER_ROS_H

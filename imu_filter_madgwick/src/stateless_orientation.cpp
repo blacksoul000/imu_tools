@@ -49,16 +49,15 @@ static inline T normalizeVector(T& vx, T& vy, T& vz) {
 
 }
 
-
 bool StatelessOrientation::computeOrientation(
   WorldFrame::WorldFrame frame,
-  geometry_msgs::Vector3 A,
-  geometry_msgs::Vector3 E,
-  geometry_msgs::Quaternion& orientation) {
+  geometry_msgs::msg::Vector3 A,
+  geometry_msgs::msg::Vector3 E,
+  geometry_msgs::msg::Quaternion& orientation) {
 
   float Hx, Hy, Hz;
   float Mx, My, Mz;
-  float normH, invH, invA;
+  float normH;
 
   // A: pointing up
   float Ax = A.x, Ay = A.y, Az = A.z;
@@ -140,21 +139,21 @@ bool StatelessOrientation::computeOrientation(
   // coordinate systems. Thus negate rotation angle (inverse).
   tf2::Quaternion q;
   R.getRotation(q);
-  tf2::convert(q.inverse(), orientation);
+  orientation = tf2::toMsg(q.inverse());
   return true;
 }
 
 
 bool StatelessOrientation::computeOrientation(
   WorldFrame::WorldFrame frame,
-  geometry_msgs::Vector3 A,
-  geometry_msgs::Quaternion& orientation) {
+  geometry_msgs::msg::Vector3 A,
+  geometry_msgs::msg::Quaternion& orientation) {
 
   // This implementation could be optimized regarding speed.
 
   // magnetic Field E must not be parallel to A,
   // choose an arbitrary orthogonal vector
-  geometry_msgs::Vector3 E;
+  geometry_msgs::msg::Vector3 E;
   if (fabs(A.x) > 0.1 || fabs(A.y) > 0.1) {
       E.x = A.y;
       E.y = A.x;

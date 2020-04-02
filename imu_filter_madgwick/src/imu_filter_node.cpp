@@ -22,14 +22,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "rclcpp/rclcpp.hpp"
+
 #include "imu_filter_madgwick/imu_filter_ros.h"
 
 int main (int argc, char **argv)
 {
-  ros::init (argc, argv, "ImuFilter");
-  ros::NodeHandle nh;
-  ros::NodeHandle nh_private("~");
-  ImuFilterRos imu_filter(nh, nh_private);
-  ros::spin();
+  // Force flush of the stdout buffer.
+  // This ensures a correct sync of all prints
+  // even when executed simultaneously within the launch file.
+  setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+
+  // Initialize any global resources needed by the middleware and the client library.
+  // You must call this before using any other part of the ROS system.
+  // This should be called once per process.
+  rclcpp::init(argc, argv);
+
+  auto node = std::make_shared< rclcpp::Node >("imu_filter");
+
+  ImuFilterRos imu_filter(node);
+  rclcpp::spin(node);
+  rclcpp::shutdown();
   return 0;
 }

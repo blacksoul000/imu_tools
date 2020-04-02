@@ -28,15 +28,24 @@
 	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#include "rclcpp/rclcpp.hpp"
 
 #include "imu_complementary_filter/complementary_filter_ros.h"
 
 int main (int argc, char **argv)
 {
-  ros::init (argc, argv, "ComplementaryFilterROS");
-  ros::NodeHandle nh;
-  ros::NodeHandle nh_private("~");
-  imu_tools::ComplementaryFilterROS filter(nh, nh_private);
-  ros::spin();
+    // Force flush of the stdout buffer.
+  // This ensures a correct sync of all prints
+  // even when executed simultaneously within the launch file.
+  setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+
+  // Initialize any global resources needed by the middleware and the client library.
+  // You must call this before using any other part of the ROS system.
+  // This should be called once per process.
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared< rclcpp::Node >("imu_filter");
+  imu_tools::ComplementaryFilterROS filter(node);
+  rclcpp::spin(node);
+  rclcpp::shutdown();
   return 0;
 }

@@ -1,49 +1,50 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(imu_complementary_filter)
 
-find_package(catkin REQUIRED COMPONENTS
-  cmake_modules
-  message_filters
-  roscpp
-  sensor_msgs
-  std_msgs
-  tf
-)
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
 
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES complementary_filter
-  CATKIN_DEPENDS message_filters roscpp sensor_msgs std_msgs tf
-)
+# Default to C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
 
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra)
+endif()
+
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(message_filters REQUIRED)
+
+include_directories(include)
 
 ## Declare a cpp library
 add_library(complementary_filter
   src/complementary_filter.cpp
   src/complementary_filter_ros.cpp
-  include/imu_complementary_filter/complementary_filter.h
-  include/imu_complementary_filter/complementary_filter_ros.h
 )
-
 
 # create complementary_filter_node executable
-add_executable(complementary_filter_node
-  src/complementary_filter_node.cpp)
-target_link_libraries(complementary_filter_node complementary_filter ${catkin_LIBRARIES})
+add_executable(complementary_filter_node src/complementary_filter_node.cpp)
+target_link_libraries(complementary_filter_node complementary_filter)
 
-install(TARGETS complementary_filter complementary_filter_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+ament_export_include_directories(include)
+ament_target_dependencies(complementary_filter rclcpp message_filters sensor_msgs std_msgs
+                          tf2_ros geometry_msgs tf2_geometry_msgs)
+ament_export_dependencies(rclcpp message_filters sensor_msgs std_msgs tf2_ros
+                          geometry_msgs tf2_geometry_msgs)
 
-## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
-)
+install(TARGETS
+  complementary_filter_node
+  complementary_filter
+  DESTINATION lib/${PROJECT_NAME})
+
+ament_package()
